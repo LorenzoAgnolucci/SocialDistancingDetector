@@ -53,7 +53,6 @@ def save_coefficients(mtx, dist, path):
 
 def load_coefficients(path):
     """ Loads camera matrix and distortion coefficients. """
-    # FILE_STORAGE_READ
     cv_file = cv2.FileStorage(path, cv2.FILE_STORAGE_READ)
 
     # note we also have to specify the type to retrieve other wise we only get a
@@ -63,6 +62,45 @@ def load_coefficients(path):
 
     cv_file.release()
     return [camera_matrix, dist_matrix]
+
+
+def get_calibrated_image(image, matrix_path):
+    mtx, dist = load_coefficients(matrix_path)
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    h, w = gray_image.shape[:2]
+    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
+
+    calibrated_image = cv2.undistort(image, mtx, dist, None, newcameramtx)
+
+    # crop the image
+    x, y, w, h = roi
+    calibrated_image = calibrated_image[y:y + h + 1, x:x + w + 1]
+    return calibrated_image
+
+
+def get_bird_view(original_ROI_points, img):
+    original_ROI_points = np.array(original_ROI_points)
+
+    # Find bounding box of original_ROI_points
+    x_coords, y_coords = zip(*original_ROI_points)
+    bbox = [(min(x_coords), min(y_coords)), (max(x_coords), max(y_coords))]
+    bbox_width = bbox[1][0] - bbox[0][0]
+    bbox_height = bbox[1][1] - bbox[0][1]
+    bbox = [bbox[0], [bbox[0][0] + bbox_width, bbox[0][1]], bbox[1], [bbox[0][0], bbox[0][1] + bbox_height]]
+
+    bird_view_ROI_points = np.array(bbox)
+
+    homography_matrix, status = cv2.findHomography(original_ROI_points, bird_view_ROI_points)
+
+    # FIXME: Increase img_out dimensions if they are lower than a threshold
+    # Warp source image to destination based on homography
+    img_out = cv2.warpPerspective(img, homography_matrix, (bbox_width, bbox_height))
+
+    cv2.imshow("Source Image", img)
+    cv2.imshow("Warped Source Image", img_out)
+    cv2.waitKey(0)
+
+    return homography_matrix
 
 
 if __name__ == '__main__':
