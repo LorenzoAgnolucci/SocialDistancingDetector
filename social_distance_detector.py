@@ -15,7 +15,7 @@ def get_mouse_points(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
         mouseX, mouseY = x, y
         cv2.circle(image, (x, y), 5, (0, 255, 255), 5)
-        if "mouse_pts" not in globals():
+        if "mouse_points" not in globals():
             mouse_points = []
         mouse_points.append((x, y))
         print("Point detected")
