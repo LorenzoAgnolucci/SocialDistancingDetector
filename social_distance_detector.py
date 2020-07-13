@@ -111,7 +111,6 @@ while video_stream.isOpened():
         distance_threshold = np.sqrt((warped_distance_points[0][0] - warped_distance_points[1][0]) ** 2
                                      + (warped_distance_points[0][1] - warped_distance_points[1][1]) ** 2)
 
-    # frame = imutils.resize(frame, width=700)
     results = detect_people(frame, net, ln, 0)
     violating_pairs = []
     if results:
