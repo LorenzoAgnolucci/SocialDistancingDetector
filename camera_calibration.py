@@ -79,20 +79,29 @@ def get_calibrated_image(image, matrix_path):
 
 
 def get_bird_view(original_ROI_points, img):
+    AREA_THRESHOLD = 100000
+    AREA_SCALE_FACTOR = 1.15
+
     original_ROI_points = np.array(original_ROI_points)
 
     # Find bounding box of original_ROI_points
     x_coords, y_coords = zip(*original_ROI_points)
-    bbox = [(min(x_coords), min(y_coords)), (max(x_coords), max(y_coords))]
-    bbox_width = bbox[1][0] - bbox[0][0]
-    bbox_height = bbox[1][1] - bbox[0][1]
-    bbox = [bbox[0], [bbox[0][0] + bbox_width, bbox[0][1]], bbox[1], [bbox[0][0], bbox[0][1] + bbox_height]]
 
+    #bbox = [(min(x_coords), min(y_coords)), (max(x_coords), max(y_coords))]
+    #bbox_width = bbox[1][0] - bbox[0][0]
+    #bbox_height = bbox[1][1] - bbox[0][1]
+    bbox_width = int(np.sqrt(((original_ROI_points[0][0]-original_ROI_points[1][0])**2) + ((original_ROI_points[0][1]-original_ROI_points[1][1])**2)))
+    bbox_height = int(np.sqrt(((original_ROI_points[2][0]-original_ROI_points[1][0])**2) + ((original_ROI_points[2][1]-original_ROI_points[1][1])**2)))
+
+    while bbox_height*bbox_width <= AREA_THRESHOLD:
+        bbox_height = int(bbox_height*AREA_SCALE_FACTOR)
+        bbox_width = int(bbox_width*AREA_SCALE_FACTOR)
+
+    bbox = [[0, 0], [bbox_width, 0], [bbox_width, bbox_height], [0, bbox_height]]
     bird_view_ROI_points = np.array(bbox)
 
     homography_matrix, status = cv2.findHomography(original_ROI_points, bird_view_ROI_points)
 
-    # FIXME: Increase img_out dimensions if they are lower than a threshold
     # Warp source image to destination based on homography
     img_out = cv2.warpPerspective(img, homography_matrix, (bbox_width, bbox_height))
 
