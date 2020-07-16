@@ -128,12 +128,13 @@ if __name__ == '__main__':
 
         frame_h = frame.shape[0]
         frame_w = frame.shape[1]
+
         if frame_num == 1:
             while len(mouse_points) <= 5:
                 image = frame
-                cv2.imshow("First Frame", image)
+                cv2.imshow("First frame", image)
                 cv2.waitKey(1)
-            cv2.destroyWindow("First Frame")
+            cv2.destroyWindow("First frame")
             # mouse_points[:4] -> ROI (from top left clockwise)  mouse_points[4:6] -> distance points (1 meter)
             homography_matrix, aspect_ratio = get_bird_view(mouse_points[:4], frame)
 
@@ -181,8 +182,8 @@ if __name__ == '__main__':
 
         cv2.polylines(frame, np.int32([mouse_points[:4]]), True, (168, 50, 124), 2)
 
-        text_2 = "Social Distancing Violations: {}".format(len(violating_pairs))
-        cv2.putText(frame, text_2, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 3)
+        border_text = "Social Distancing Violations: {}".format(len(violating_pairs))
+        cv2.putText(frame, border_text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 3)
         text = "Social Distancing Violations: {}".format(len(violating_pairs))
         cv2.putText(frame, text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
         text_bv = "Bird View"
