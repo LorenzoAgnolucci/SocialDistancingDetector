@@ -5,6 +5,9 @@ from camera_calibration import get_calibrated_image
 import numpy as np
 import cv2
 import os
+from VideoGet import VideoGet
+from imutils.video import FPS
+import streamlink
 
 
 def get_mouse_points(event, x, y, flags, param):
@@ -100,12 +103,12 @@ if __name__ == '__main__':
 
     CALIBRATION_MATRIX_PATH = 'calibration_matrix.yml'
 
-    # video_stream = cv2.VideoCapture(0)
-    video_stream = cv2.VideoCapture('video/pedestrians.mp4')
+    stream_source = streamlink.streams('https://www.youtube.com/watch?v=DbY00xhcrgU')['best'].url
+    # stream_source = 0     # Computer webcam
+    # stream_source = 'video/pedestrians.mp4'
+    video_getter = VideoGet(stream_source).start()
 
-    # height = int(video_stream.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    # width = int(video_stream.get(cv2.CAP_PROP_FRAME_WIDTH))
-    # fps = int(video_stream.get(cv2.CAP_PROP_FPS))
+    fps = FPS().start()
 
     frame_num = 0
     cv2.namedWindow("First Frame")
@@ -115,16 +118,14 @@ if __name__ == '__main__':
     warped_ROI_points = []
     distance_threshold = 0
 
-    while video_stream.isOpened():
+    while video_getter.more():
 
         frame_num += 1
-        ret, frame = video_stream.read()
-        frame = cv2.resize(frame, (720, 480))
-        frame = get_calibrated_image(frame, CALIBRATION_MATRIX_PATH)
+        frame = video_getter.read()
 
-        if not ret:
-            print("End of the video file")
-            break
+        frame = cv2.resize(frame, (1080, 720))
+        if stream_source == 0:
+            frame = get_calibrated_image(frame, CALIBRATION_MATRIX_PATH)
 
         frame_h = frame.shape[0]
         frame_w = frame.shape[1]
@@ -196,9 +197,12 @@ if __name__ == '__main__':
 
         cv2.imshow("Social Distancing Detector", split_image)
         key = cv2.waitKey(1) & 0xFF
+        fps.update()
 
         # if the `q` key was pressed, break from the loop
         if key == ord("q"):
             break
 
-        # print("Processing frame: ", frame_num)
+    fps.stop()
+    print(f"FPS: {fps.fps()}")
+    print(f"Elapsed: {fps.elapsed()}")
