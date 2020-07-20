@@ -1,5 +1,5 @@
-from pyimagesearch import social_distancing_config as config
-from pyimagesearch.detection import detect_people
+from object_detection import neural_network_config as config
+from object_detection.object_detection import detect_people
 from scipy.spatial import distance as dist
 from camera_calibration import get_calibrated_image
 import numpy as np
@@ -102,17 +102,21 @@ if __name__ == '__main__':
     ln = [ln[i[0] - 1] for i in net.getUnconnectedOutLayers()]
 
     CALIBRATION_MATRIX_PATH = 'calibration_matrix.yml'
+    DISTANCE_THRESHOLD_METERS = 2
 
-    stream_source = streamlink.streams('https://www.youtube.com/watch?v=DbY00xhcrgU')['best'].url
     # stream_source = 0     # Computer webcam
-    # stream_source = 'video/pedestrians.mp4'
-    video_getter = VideoGet(stream_source).start()
+    # stream_source = 'https://192.168.1.84:8080/video'     # Phone camera stream
+    # video_getter = VideoGet(stream_source, True).start()
+
+    # stream_source = streamlink.streams('https://www.youtube.com/watch?v=DbY00xhcrgU')['best'].url     # Remote youtube live stream
+    stream_source = 'video/pedestrians.mp4'       # Local video
+    video_getter = VideoGet(stream_source, False).start()
 
     fps = FPS().start()
 
     frame_num = 0
-    cv2.namedWindow("First Frame")
-    cv2.setMouseCallback("First Frame", get_mouse_points)
+    cv2.namedWindow("First frame")
+    cv2.setMouseCallback("First frame", get_mouse_points)
     mouse_points = []
     homography_matrix = []
     warped_ROI_points = []
@@ -123,9 +127,14 @@ if __name__ == '__main__':
         frame_num += 1
         frame = video_getter.read()
 
-        frame = cv2.resize(frame, (1080, 720))
         if stream_source == 0:
-            frame = get_calibrated_image(frame, CALIBRATION_MATRIX_PATH)
+           frame = get_calibrated_image(frame, CALIBRATION_MATRIX_PATH)
+
+        frame_h = frame.shape[0]
+        frame_w = frame.shape[1]
+        video_stream_aspect_ratio = frame_w / frame_h
+
+        frame = cv2.resize(frame, (int(video_stream_aspect_ratio*600), 600))
 
         frame_h = frame.shape[0]
         frame_w = frame.shape[1]
@@ -133,6 +142,10 @@ if __name__ == '__main__':
         if frame_num == 1:
             while len(mouse_points) <= 5:
                 image = frame
+                text = "1) Insert 4 (rectangular) ROI points from top-left in clockwise order"
+                cv2.putText(image, text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 0, 255), 2)
+                text = "2) Insert 2 points corresponding to 1 meter"
+                cv2.putText(image, text, (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 0, 255), 2)
                 cv2.imshow("First frame", image)
                 cv2.waitKey(1)
             cv2.destroyWindow("First frame")
@@ -145,6 +158,7 @@ if __name__ == '__main__':
 
             distance_threshold = np.sqrt((warped_distance_points[0][0] - warped_distance_points[1][0]) ** 2
                                          + (warped_distance_points[0][1] - warped_distance_points[1][1]) ** 2)
+            distance_threshold = distance_threshold * DISTANCE_THRESHOLD_METERS
 
         bird_view = []
         if aspect_ratio <= 1:
