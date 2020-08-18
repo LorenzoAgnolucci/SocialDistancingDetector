@@ -128,7 +128,7 @@ if __name__ == '__main__':
         frame = video_getter.read()
 
         if stream_source == 0:
-           frame = get_calibrated_image(frame, CALIBRATION_MATRIX_PATH)
+            frame = get_calibrated_image(frame, CALIBRATION_MATRIX_PATH)
 
         frame_h = frame.shape[0]
         frame_w = frame.shape[1]
@@ -187,13 +187,13 @@ if __name__ == '__main__':
                         (jcX, jcY) = results[j][2]
                         (jwarpedX, jwarpedY) = warped_results_feet_points[j]
                         cv2.line(frame, (cX, cY), (jcX, jcY), color, 2)
-                        cv2.line(bird_view, (warpedX, warpedY), (jwarpedX, jwarpedY), color, 1)
+                        cv2.line(bird_view, (int(warpedX), int(warpedY)), (int(jwarpedX), int(jwarpedY)), color, 1)
 
                 cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
                 cv2.circle(frame, (cX, cY), 5, color, 1)
                 if results_labels[i] != -1:
-                    cv2.circle(bird_view, (warpedX, warpedY), int(distance_threshold / 2), color, 1)
-                    cv2.circle(bird_view, (warpedX, warpedY), 1, color, 1)
+                    cv2.circle(bird_view, (int(warpedX), int(warpedY)), int(distance_threshold / 2), color, 1)
+                    cv2.circle(bird_view, (int(warpedX), int(warpedY)), 1, color, 1)
 
         cv2.polylines(frame, np.int32([mouse_points[:4]]), True, (168, 50, 124), 2)
 
@@ -220,3 +220,5 @@ if __name__ == '__main__':
     fps.stop()
     print(f"FPS: {fps.fps()}")
     print(f"Elapsed: {fps.elapsed()}")
+    cv2.destroyAllWindows()
+    video_getter.stop()
