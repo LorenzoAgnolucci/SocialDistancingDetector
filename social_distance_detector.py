@@ -1,6 +1,7 @@
 from object_detection import neural_network_config as config
 from object_detection.object_detection import detect_people
 from scipy.spatial import distance as dist
+import math
 from camera_calibration import get_calibrated_image
 import numpy as np
 import cv2
@@ -11,12 +12,12 @@ import streamlink
 
 
 def get_mouse_points(event, x, y, flags, param):
-    # Used to mark 4 points on the frame zero of the video that will be warped
-    # Used to mark 2 points on the frame zero of the video that are 1 meter away
+    # Used to mark 4 points on the first frame of the video that will be warped
+    # Used to mark 2 points on the first frame of the video that are 1 meter away
     global mouseX, mouseY, mouse_points
     if event == cv2.EVENT_LBUTTONDOWN:
         mouseX, mouseY = x, y
-        cv2.circle(image, (x, y), 5, (0, 255, 255), 5)
+        cv2.circle(frame, (x, y), 5, (0, 255, 255), 5)
         if "mouse_points" not in globals():
             mouse_points = []
         mouse_points.append((x, y))
@@ -29,32 +30,87 @@ def check_in_ROI(point, ROI):
 
 
 def get_bird_view(original_ROI_points, img):
-    AREA_THRESHOLD = 100000
-    AREA_SCALE_FACTOR = 1.15
+    img_height, img_width = img.shape[:2]
 
-    original_ROI_points = np.array(original_ROI_points)
+    # image center
+    u0 = img_width / 2
+    v0 = img_height / 2
 
-    bbox_width = int(np.sqrt(((original_ROI_points[0][0]-original_ROI_points[1][0])**2) + ((original_ROI_points[0][1]-original_ROI_points[1][1])**2)))
-    bbox_height = int(np.sqrt(((original_ROI_points[2][0]-original_ROI_points[1][0])**2) + ((original_ROI_points[2][1]-original_ROI_points[1][1])**2)))
+    # detected corners on the original image
+    p = [original_ROI_points[0], original_ROI_points[1], original_ROI_points[3], original_ROI_points[2]]
 
-    while bbox_height*bbox_width <= AREA_THRESHOLD:
-        bbox_height = int(bbox_height*AREA_SCALE_FACTOR)
-        bbox_width = int(bbox_width*AREA_SCALE_FACTOR)
-    aspect_ratio = bbox_width / bbox_height
-    img_h, img_w = img.shape[:2]
-    if aspect_ratio <= 1:
-        bbox_width = int(img_h * aspect_ratio)
-        bbox_height = img_h
+    # widths and heights of the projected image
+    w1 = dist.euclidean(p[0], p[1])
+    w2 = dist.euclidean(p[2], p[3])
+
+    h1 = dist.euclidean(p[0], p[2])
+    h2 = dist.euclidean(p[1], p[3])
+
+    w = max(w1, w2)
+    h = max(h1, h2)
+
+    # visible aspect ratio
+    ar_vis = float(w) / float(h)
+
+    # make numpy arrays and append 1 for linear algebra
+    m1 = np.array((p[0][0], p[0][1], 1)).astype('float32')
+    m2 = np.array((p[1][0], p[1][1], 1)).astype('float32')
+    m3 = np.array((p[2][0], p[2][1], 1)).astype('float32')
+    m4 = np.array((p[3][0], p[3][1], 1)).astype('float32')
+
+    # calculate the focal distance
+    k2 = np.dot(np.cross(m1, m4), m3) / np.dot(np.cross(m2, m4), m3)
+    k3 = np.dot(np.cross(m1, m4), m2) / np.dot(np.cross(m3, m4), m2)
+
+    n2 = k2 * m2 - m1
+    n3 = k3 * m3 - m1
+
+    n21 = n2[0]
+    n22 = n2[1]
+    n23 = n2[2]
+
+    n31 = n3[0]
+    n32 = n3[1]
+    n33 = n3[2]
+
+    f = math.sqrt(np.abs((1.0 / (n23 * n33)) * ((n21 * n31 - (n21 * n33 + n23 * n31) * u0 + n23 * n33 * u0 * u0) + (
+                n22 * n32 - (n22 * n33 + n23 * n32) * v0 + n23 * n33 * v0 * v0))))
+
+    A = np.array([[f, 0, u0], [0, f, v0], [0, 0, 1]]).astype('float32')
+
+    At = np.transpose(A)
+    Ati = np.linalg.inv(At)
+    Ai = np.linalg.inv(A)
+
+    # compute the real aspect ratio
+    ar_real = math.sqrt(np.dot(np.dot(np.dot(n2, Ati), Ai), n2) / np.dot(np.dot(np.dot(n3, Ati), Ai), n3))
+
+    if ar_real < ar_vis:
+        W = int(w)
+        H = int(W / ar_real)
     else:
-        bbox_width = img_w
-        bbox_height = int(img_w / aspect_ratio)
-    bbox = [[0, 0], [bbox_width, 0], [bbox_width, bbox_height], [0, bbox_height]]
-    bird_view_ROI_points = np.array(bbox)
+        H = int(h)
+        W = int(ar_real * H)
 
+    aspect_ratio = W / H
+
+    if aspect_ratio <= 1:
+        bbox_width = int(img_height * aspect_ratio)
+        bbox_height = img_height
+    else:
+        bbox_width = img_width
+        bbox_height = int(img_width / aspect_ratio)
+    bbox = [[0, 0], [bbox_width, 0], [bbox_width, bbox_height], [0, bbox_height]]
+
+    original_ROI_points = np.array(original_ROI_points).astype('float32')
+    bird_view_ROI_points = np.float32(bbox)
+
+    # project the image with the new w/h
     homography_matrix, status = cv2.findHomography(original_ROI_points, bird_view_ROI_points)
 
-    # Warp source image to destination based on homography
-    # img_out = cv2.warpPerspective(img, homography_matrix, (bbox_width, bbox_height))
+    img_out = cv2.warpPerspective(img, homography_matrix, (bbox_width, bbox_height))
+    cv2.imshow("Warped", img_out)
+    cv2.waitKey(0)
 
     return homography_matrix, aspect_ratio
 
@@ -135,20 +191,19 @@ if __name__ == '__main__':
         video_stream_aspect_ratio = frame_w / frame_h
 
         frame = cv2.resize(frame, (int(video_stream_aspect_ratio*600), 600))
-
         frame_h = frame.shape[0]
         frame_w = frame.shape[1]
 
         if frame_num == 1:
             while len(mouse_points) <= 5:
-                image = frame
                 text = "1) Insert 4 (rectangular) ROI points from top-left in clockwise order"
-                cv2.putText(image, text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 0, 255), 2)
+                cv2.putText(frame, text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 0, 255), 2)
                 text = "2) Insert 2 points corresponding to 1 meter"
-                cv2.putText(image, text, (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 0, 255), 2)
-                cv2.imshow("First frame", image)
+                cv2.putText(frame, text, (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 0, 255), 2)
+                cv2.imshow("First frame", frame)
                 cv2.waitKey(1)
             cv2.destroyWindow("First frame")
+
             # mouse_points[:4] -> ROI (from top left clockwise)  mouse_points[4:6] -> distance points (1 meter)
             homography_matrix, aspect_ratio = get_bird_view(mouse_points[:4], frame)
 
