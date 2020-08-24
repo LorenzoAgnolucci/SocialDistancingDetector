@@ -266,12 +266,17 @@ if __name__ == '__main__':
 
         current_total_people = len([el for el in results_labels if el == 1 or el == 0])
         current_violating_people = len([el for el in results_labels if el == 1])
-
-        current_violating_percentage = format(current_violating_people / current_total_people * 100, ".1f")
+        if current_total_people:
+            current_violating_percentage = format(current_violating_people / current_total_people * 100, ".1f")
+        else:
+            current_violating_percentage = 0.0
 
         cumulative_total_people += current_total_people
         cumulative_violating_people += current_violating_people
-        cumulative_violating_percentage = format(cumulative_violating_people / cumulative_total_people * 100, ".1f")
+        if cumulative_total_people:
+            cumulative_violating_percentage = format(cumulative_violating_people / cumulative_total_people * 100, ".1f")
+        else:
+            cumulative_violating_percentage = 0.0
 
         current_border_text = f"Current Social Distancing Violations: {current_violating_percentage}%"
         cv2.putText(frame, current_border_text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 3)
