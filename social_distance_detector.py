@@ -8,6 +8,8 @@ import cv2
 import os
 from VideoGet import VideoGet
 from imutils.video import FPS
+import imutils
+import tkinter as tk
 import streamlink
 
 
@@ -213,6 +215,7 @@ if __name__ == '__main__':
                 text = "2) Insert 2 points on the ROI plane corresponding to 1 meter in real world"
                 cv2.putText(frame, text, (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 0, 255), 2)
                 cv2.imshow("First frame", frame)
+                cv2.moveWindow("First frame", 69, 20)
                 cv2.waitKey(1)
             cv2.destroyWindow("First frame")
             # mouse_points[:4] -> ROI (from top left clockwise)  mouse_points[4:6] -> distance points (1 meter)
@@ -289,15 +292,37 @@ if __name__ == '__main__':
         text_bv = "Bird View"
         cv2.putText(bird_view, text_bv, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2)
 
+        # if aspect_ratio <= 1:
+        #     split_image = np.hstack((frame, bird_view))
+        #     cv2.imshow("Social Distancing Detector", split_image)
+        #     # cv2.moveWindow("Social Distancing Detector", 65, 20)
+        #     key = cv2.waitKey(1) & 0xFF
+        #     fps.update()
+        # else:
+        #     cv2.imshow("Social Distancing Detector", frame)
+        #     cv2.imshow("Bird view", bird_view)
+        #     key = cv2.waitKey(1) & 0xFF
+
         if aspect_ratio <= 1:
             split_image = np.hstack((frame, bird_view))
+            root = tk.Tk()
+            if split_image.shape[1] > root.winfo_screenwidth():
+                split_image = imutils.resize(split_image, height=root.winfo_screenwidth() - 100)
+            cv2.imshow("Social Distancing Detector", split_image)
+            if frame_num == 1:
+                cv2.moveWindow("Social Distancing Detector", 69, 20)
+            key = cv2.waitKey(1) & 0xFF
+            fps.update()
         else:
             split_image = np.vstack((frame, bird_view))
-
-        cv2.imshow("Social Distancing Detector", split_image)
-        cv2.moveWindow("Social Distancing Detector", 65, 20)
-        key = cv2.waitKey(1) & 0xFF
-        fps.update()
+            root = tk.Tk()
+            if split_image.shape[0] > root.winfo_screenheight():
+                split_image = imutils.resize(split_image, height=root.winfo_screenheight()-100)
+            cv2.imshow("Social Distancing Detector", split_image)
+            if frame_num == 1:
+                cv2.moveWindow("Social Distancing Detector", 69, 20)
+            key = cv2.waitKey(1) & 0xFF
+            fps.update()
 
         # if the `q` key was pressed, break from the loop
         if key == ord("q"):
