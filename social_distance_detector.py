@@ -167,7 +167,7 @@ if __name__ == '__main__':
     # isPhone = True
     # video_getter = VideoGet(stream_source, True).start()
 
-    # stream_source = streamlink.streams('https://www.youtube.com/watch?v=DbY00xhcrgU')['best'].url     # Remote youtube live stream
+    # stream_source = streamlink.streams('https://www.youtube.com/watch?v=srlpC5tmhYs')['best'].url     # Remote youtube live stream
     stream_source = 'video/pedestrians.mp4'       # Local video
     video_getter = VideoGet(stream_source, False).start()
 
@@ -180,6 +180,8 @@ if __name__ == '__main__':
     homography_matrix = []
     warped_ROI_points = []
     distance_threshold = 0
+    cumulative_total_people = 0
+    cumulative_violating_people = 0
 
     while video_getter.more():
 
@@ -257,10 +259,22 @@ if __name__ == '__main__':
 
         cv2.polylines(frame, np.int32([mouse_points[:4]]), True, (168, 50, 124), 2)
 
-        border_text = "Social Distancing Violations: {}".format(len(violating_pairs))
-        cv2.putText(frame, border_text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 3)
-        text = "Social Distancing Violations: {}".format(len(violating_pairs))
-        cv2.putText(frame, text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
+        current_total_people = len([el for el in results_labels if el == 1 or el == 0])
+        current_violating_people = len([el for el in results_labels if el == 1])
+        current_violating_percentage = format(current_violating_people / current_total_people * 100, ".1f")
+
+        cumulative_total_people += current_total_people
+        cumulative_violating_people += current_violating_people
+        cumulative_violating_percentage = format(cumulative_violating_people / cumulative_total_people * 100, ".1f")
+
+        current_border_text = f"Current Social Distancing Violations: {current_violating_percentage}%"
+        cv2.putText(frame, current_border_text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 3)
+        current_text = f"Current Social Distancing Violations: {current_violating_percentage}%"
+        cv2.putText(frame, current_text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
+        cumulative_border_text = f"Cumulative Social Distancing Violations: {cumulative_violating_percentage}%"
+        cv2.putText(frame, cumulative_border_text, (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 3)
+        cumulative_text = f"Cumulative Social Distancing Violations: {cumulative_violating_percentage}%"
+        cv2.putText(frame, cumulative_text, (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
         text_bv = "Bird View"
         cv2.putText(bird_view, text_bv, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2)
 
@@ -270,6 +284,7 @@ if __name__ == '__main__':
             split_image = np.vstack((frame, bird_view))
 
         cv2.imshow("Social Distancing Detector", split_image)
+        cv2.moveWindow("Social Distancing Detector", 65, 20)
         key = cv2.waitKey(1) & 0xFF
         fps.update()
 
