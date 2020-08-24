@@ -292,38 +292,23 @@ if __name__ == '__main__':
         text_bv = "Bird View"
         cv2.putText(bird_view, text_bv, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2)
 
-        # if aspect_ratio <= 1:
-        #     split_image = np.hstack((frame, bird_view))
-        #     cv2.imshow("Social Distancing Detector", split_image)
-        #     # cv2.moveWindow("Social Distancing Detector", 65, 20)
-        #     key = cv2.waitKey(1) & 0xFF
-        #     fps.update()
-        # else:
-        #     cv2.imshow("Social Distancing Detector", frame)
-        #     cv2.imshow("Bird view", bird_view)
-        #     key = cv2.waitKey(1) & 0xFF
-
+        root = tk.Tk()
+        screen_width = root.winfo_screenwidth()
+        scree_height = root.winfo_screenheight()
         if aspect_ratio <= 1:
             split_image = np.hstack((frame, bird_view))
-            root = tk.Tk()
-            if split_image.shape[1] > root.winfo_screenwidth():
-                split_image = imutils.resize(split_image, height=root.winfo_screenwidth() - 100)
-            cv2.imshow("Social Distancing Detector", split_image)
-            if frame_num == 1:
-                cv2.moveWindow("Social Distancing Detector", 69, 20)
-            key = cv2.waitKey(1) & 0xFF
-            fps.update()
+            if split_image.shape[1] > screen_width:
+                split_image = imutils.resize(split_image, width=screen_width-100)
         else:
             split_image = np.vstack((frame, bird_view))
-            root = tk.Tk()
-            if split_image.shape[0] > root.winfo_screenheight():
-                split_image = imutils.resize(split_image, height=root.winfo_screenheight()-100)
-            cv2.imshow("Social Distancing Detector", split_image)
-            if frame_num == 1:
-                cv2.moveWindow("Social Distancing Detector", 69, 20)
-            key = cv2.waitKey(1) & 0xFF
-            fps.update()
+            if split_image.shape[0] > scree_height:
+                split_image = imutils.resize(split_image, height=scree_height-100)
 
+        cv2.imshow("Social Distancing Detector", split_image)
+        if frame_num == 1:
+            cv2.moveWindow("Social Distancing Detector", 69, 20)
+        key = cv2.waitKey(1) & 0xFF
+        fps.update()
         # if the `q` key was pressed, break from the loop
         if key == ord("q"):
             break
