@@ -267,8 +267,12 @@ if __name__ == '__main__':
 
         cv2.polylines(frame, np.int32([mouse_points[:4]]), True, (168, 50, 124), 2)
 
-        current_total_people = len([el for el in results_labels if el == 1 or el == 0])
-        current_violating_people = len([el for el in results_labels if el == 1])
+        if results:
+            current_total_people = len([el for el in results_labels if el == 1 or el == 0])
+            current_violating_people = len([el for el in results_labels if el == 1])
+        else:
+            current_total_people = 0
+            current_violating_people = 0
         if current_total_people:
             current_violating_percentage = format(current_violating_people / current_total_people * 100, ".1f")
         else:
