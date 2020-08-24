@@ -204,9 +204,13 @@ if __name__ == '__main__':
 
         if frame_num == 1:
             while len(mouse_points) <= 5:
-                text = "1) Insert 4 (rectangular) ROI points from top-left in clockwise order"
+                text = "1) Insert 4 (rectangular in real world) ROI points from top-left in clockwise order"
+                cv2.putText(frame, text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 3)
+                text = "2) Insert 2 points on the ROI plane corresponding to 1 meter in real world"
+                cv2.putText(frame, text, (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 3)
+                text = "1) Insert 4 (rectangular in real world) ROI points from top-left in clockwise order"
                 cv2.putText(frame, text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 0, 255), 2)
-                text = "2) Insert 2 points corresponding to 1 meter"
+                text = "2) Insert 2 points on the ROI plane corresponding to 1 meter in real world"
                 cv2.putText(frame, text, (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 0, 255), 2)
                 cv2.imshow("First frame", frame)
                 cv2.waitKey(1)
@@ -245,6 +249,7 @@ if __name__ == '__main__':
                     color = (0, 255, 255)
                 elif results_labels[i] == 1:
                     color = (0, 0, 255)
+
                     for j in [el[1] for el in violating_pairs if el[0] == i]:
                         (jcX, jcY) = results[j][2]
                         (jwarpedX, jwarpedY) = warped_results_feet_points[j]
@@ -261,6 +266,7 @@ if __name__ == '__main__':
 
         current_total_people = len([el for el in results_labels if el == 1 or el == 0])
         current_violating_people = len([el for el in results_labels if el == 1])
+
         current_violating_percentage = format(current_violating_people / current_total_people * 100, ".1f")
 
         cumulative_total_people += current_total_people
@@ -272,9 +278,9 @@ if __name__ == '__main__':
         current_text = f"Current Social Distancing Violations: {current_violating_percentage}%"
         cv2.putText(frame, current_text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
         cumulative_border_text = f"Cumulative Social Distancing Violations: {cumulative_violating_percentage}%"
-        cv2.putText(frame, cumulative_border_text, (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 3)
+        cv2.putText(frame, cumulative_border_text, (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 3)
         cumulative_text = f"Cumulative Social Distancing Violations: {cumulative_violating_percentage}%"
-        cv2.putText(frame, cumulative_text, (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
+        cv2.putText(frame, cumulative_text, (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
         text_bv = "Bird View"
         cv2.putText(bird_view, text_bv, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2)
 
