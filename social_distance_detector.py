@@ -157,11 +157,14 @@ if __name__ == '__main__':
     ln = net.getLayerNames()
     ln = [ln[i[0] - 1] for i in net.getUnconnectedOutLayers()]
 
-    CALIBRATION_MATRIX_PATH = 'calibration_matrix.yml'
+    WEBCAM_CALIBRATION_MATRIX_PATH = 'calibration_matrix.yml'
+    PHONE_CALIBRATION_MATRIX_PATH = 'phone_calibration_matrix.yml'
     DISTANCE_THRESHOLD_METERS = 2
 
     # stream_source = 0     # Computer webcam
-    # stream_source = 'https://192.168.1.84:8080/video'     # Phone camera stream
+    # stream_source = 'https://192.168.1.253:8080/video'     # Phone camera stream
+    isPhone = False
+    # isPhone = True
     # video_getter = VideoGet(stream_source, True).start()
 
     # stream_source = streamlink.streams('https://www.youtube.com/watch?v=DbY00xhcrgU')['best'].url     # Remote youtube live stream
@@ -184,13 +187,16 @@ if __name__ == '__main__':
         frame = video_getter.read()
 
         if stream_source == 0:
-            frame = get_calibrated_image(frame, CALIBRATION_MATRIX_PATH)
+            frame = get_calibrated_image(frame, WEBCAM_CALIBRATION_MATRIX_PATH)
+        if isPhone:
+            frame = get_calibrated_image(frame, PHONE_CALIBRATION_MATRIX_PATH)
 
         frame_h = frame.shape[0]
         frame_w = frame.shape[1]
         video_stream_aspect_ratio = frame_w / frame_h
 
         frame = cv2.resize(frame, (int(video_stream_aspect_ratio*600), 600))
+
         frame_h = frame.shape[0]
         frame_w = frame.shape[1]
 
@@ -203,7 +209,6 @@ if __name__ == '__main__':
                 cv2.imshow("First frame", frame)
                 cv2.waitKey(1)
             cv2.destroyWindow("First frame")
-
             # mouse_points[:4] -> ROI (from top left clockwise)  mouse_points[4:6] -> distance points (1 meter)
             homography_matrix, aspect_ratio = get_bird_view(mouse_points[:4], frame)
 
