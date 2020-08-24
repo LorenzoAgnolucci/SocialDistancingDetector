@@ -4,7 +4,7 @@ import glob
 
 
 def calibrate_camera():
-    """Calibrate the camera with the given images and return the matrixes"""
+    """Calibrate the camera with the given images and return the matrices"""
     IMAGES_PATH = f"images/*.jpg"
     CHESSBOARD_WIDTH = 9
     CHESSBOARD_HEIGHT = 6
