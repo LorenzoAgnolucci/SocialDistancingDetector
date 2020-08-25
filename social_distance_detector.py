@@ -6,11 +6,10 @@ from camera_calibration import get_calibrated_image
 import numpy as np
 import cv2
 import os
-from VideoGet import VideoGet
+from build_GUI import build_GUI
 from imutils.video import FPS
 import imutils
 import tkinter as tk
-import streamlink
 
 
 def get_mouse_points(event, x, y, flags, param):
@@ -159,19 +158,10 @@ if __name__ == '__main__':
     ln = net.getLayerNames()
     ln = [ln[i[0] - 1] for i in net.getUnconnectedOutLayers()]
 
-    WEBCAM_CALIBRATION_MATRIX_PATH = 'calibration_matrix.yml'
-    PHONE_CALIBRATION_MATRIX_PATH = 'phone_calibration_matrix.yml'
     DISTANCE_THRESHOLD_METERS = 2
 
-    # stream_source = 0     # Computer webcam
-    # stream_source = 'https://192.168.1.253:8080/video'     # Phone camera stream
-    isPhone = False
-    # isPhone = True
-    # video_getter = VideoGet(stream_source, True).start()
-
-    # stream_source = streamlink.streams('https://www.youtube.com/watch?v=srlpC5tmhYs')['best'].url     # Remote youtube live stream
-    stream_source = 'video/pedestrians.mp4'       # Local video
-    video_getter = VideoGet(stream_source, False).start()
+    video_getter, calibration_path = build_GUI()
+    video_getter.start()
 
     fps = FPS().start()
 
@@ -190,10 +180,7 @@ if __name__ == '__main__':
         frame_num += 1
         frame = video_getter.read()
 
-        if stream_source == 0:
-            frame = get_calibrated_image(frame, WEBCAM_CALIBRATION_MATRIX_PATH)
-        if isPhone:
-            frame = get_calibrated_image(frame, PHONE_CALIBRATION_MATRIX_PATH)
+        frame = get_calibrated_image(frame, calibration_path)
 
         frame_h = frame.shape[0]
         frame_w = frame.shape[1]
