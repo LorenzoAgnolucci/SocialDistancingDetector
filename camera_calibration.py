@@ -65,6 +65,9 @@ def load_coefficients(path):
 
 
 def get_calibrated_image(image, matrix_path):
+    if matrix_path == "":
+        return image
+
     mtx, dist = load_coefficients(matrix_path)
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     h, w = gray_image.shape[:2]
