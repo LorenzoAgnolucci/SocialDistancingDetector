@@ -13,41 +13,53 @@ def build_GUI():
 
     app = tk.Tk()
     app.title("Social Distancing Detector")
-    app.geometry('750x500')
+    app.geometry('575x480')
 
-    optionVar = tk.StringVar(app)
+    optionVar = tk.StringVar()
     optionVar.set(OptionList[0])
 
-    optionLabel = tk.Label(text="Select input video stream: ", font=20)
-    optionLabel.place(x=10, y=10)
+    optionFrame = tk.LabelFrame(app, text="Stream type", width=550, height=80)
+    optionFrame.place(x=10, y=10)
+    optionFrame.pack_propagate(False)
 
-    opt = tk.OptionMenu(app, optionVar, *OptionList)
+    optionLabel = tk.Label(optionFrame, text="Select input video stream: ", font=20)
+    optionLabel.place(x=15, y=13)
+
+    opt = tk.OptionMenu(optionFrame, optionVar, *OptionList)
     opt.config(width=20, font=15)
-    opt.place(x=250, y=5)
+    opt.place(x=255, y=9)
 
-    sourceLabel = tk.Label(text="Don't worry about this", font=20)
-    sourceLabel.place(x=10, y=60)
+    sourceFrame = tk.LabelFrame(app, text="Source", width=550, height=140)
+    sourceFrame.place(x=10, y=110)
+    sourceFrame.pack_propagate(False)
+
+    sourceLabel = tk.Label(sourceFrame, text="Don't worry about this", font=20)
+    sourceLabel.place(x=15, y=15)
 
     sourceVar = tk.StringVar()
     sourceVar.set("0")
 
-    sourceEntry = tk.Entry(app, width=50, textvariable=sourceVar, state="disabled")
-    sourceEntry.place(x=10, y=90)
+    sourceEntry = tk.Entry(sourceFrame, width=55, textvariable=sourceVar, state="disabled")
+    sourceEntry.place(x=15, y=65)
 
-    calibrationLabel = tk.Label(text="Insert calibration matrix path (leave empty for no calibration)", font=20)
-    calibrationLabel.place(x=10, y=150)
+    calibrationFrame = tk.LabelFrame(app, text="Calibration", width=550, height=140)
+    calibrationFrame.place(x=10, y=270)
+    calibrationFrame.pack_propagate(False)
+
+    calibrationLabel = tk.Label(calibrationFrame, text="Insert calibration matrix path (leave empty for no calibration)", font=20)
+    calibrationLabel.place(x=15, y=15)
 
     calibrationVar = tk.StringVar()
     calibrationVar.set("calibration_matrix.yml")
 
-    calibrationEntry = tk.Entry(app, width=50, textvariable=calibrationVar)
-    calibrationEntry.place(x=10, y=180)
+    calibrationEntry = tk.Entry(calibrationFrame, width=50, textvariable=calibrationVar)
+    calibrationEntry.place(x=15, y=65)
 
     def continue_callback():
         app.destroy()
 
     continueButton = tk.Button(app, text="Continue", font=20, fg="blue", command=continue_callback)
-    continueButton.place(x=620, y=450)
+    continueButton.place(x=460, y=428)
 
     def option_callback(*args):
         sourceEntry.configure(state="normal")
