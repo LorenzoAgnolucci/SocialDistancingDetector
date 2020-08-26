@@ -18,7 +18,8 @@ class VideoGet:
         stream_height = int(self.stream.get(cv2.CAP_PROP_FRAME_HEIGHT))
         stream_width = int(self.stream.get(cv2.CAP_PROP_FRAME_WIDTH))
         print(f"FPS : {stream_fps},  Height: {stream_height},  Width: {stream_width}")
-        self.frame_to_skip = ceil(stream_fps / 12)
+        # self.frame_to_skip = ceil(stream_fps / 12)
+        self.frame_to_skip = 1
         (self.grabbed, self.frame) = self.stream.read()
         self.queue = Queue(1000)
         self.stopped = False

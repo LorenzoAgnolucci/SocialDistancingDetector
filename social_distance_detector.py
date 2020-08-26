@@ -25,6 +25,27 @@ def get_mouse_points(event, x, y, flags, param):
         print("Point detected")
         print(mouse_points)
 
+def get_yolo():
+    # derive the paths to the YOLO weights and model configuration
+    weightsPath = os.path.sep.join([config.MODEL_PATH, "yolov3.weights"])
+    configPath = os.path.sep.join([config.MODEL_PATH, "yolov3.cfg"])
+
+    # load our YOLO object detector trained on COCO dataset (80 classes)
+    print("[INFO] loading YOLO from disk...")
+    net = cv2.dnn.readNetFromDarknet(configPath, weightsPath)
+
+    # check if we are going to use GPU
+    if config.USE_GPU:
+        # set CUDA as the preferable backend and target
+        print("[INFO] setting preferable backend and target to CUDA...")
+        net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+        net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+
+    # determine only the *output* layer names that we need from YOLO
+    ln = net.getLayerNames()
+    ln = [ln[i[0] - 1] for i in net.getUnconnectedOutLayers()]
+    return net, ln
+
 
 def check_in_ROI(point, ROI):
     return (ROI[0][0] <= point[0] <= ROI[1][0]) and (ROI[0][1] <= point[1] <= ROI[2][1])
@@ -110,8 +131,8 @@ def get_bird_view(original_ROI_points, img):
     homography_matrix, status = cv2.findHomography(original_ROI_points, bird_view_ROI_points)
 
     img_out = cv2.warpPerspective(img, homography_matrix, (bbox_width, bbox_height))
-    cv2.imshow("Warped", img_out)
-    cv2.waitKey(0)
+    # cv2.imshow("Warped", img_out)
+    # cv2.waitKey(0)
 
     return homography_matrix, aspect_ratio
 
@@ -139,26 +160,9 @@ def compute_distances(results, warped_ROI_points, homography_matrix, distance_th
 
 
 if __name__ == '__main__':
-    # derive the paths to the YOLO weights and model configuration
-    weightsPath = os.path.sep.join([config.MODEL_PATH, "yolov3.weights"])
-    configPath = os.path.sep.join([config.MODEL_PATH, "yolov3.cfg"])
-
-    # load our YOLO object detector trained on COCO dataset (80 classes)
-    print("[INFO] loading YOLO from disk...")
-    net = cv2.dnn.readNetFromDarknet(configPath, weightsPath)
-
-    # check if we are going to use GPU
-    if config.USE_GPU:
-        # set CUDA as the preferable backend and target
-        print("[INFO] setting preferable backend and target to CUDA...")
-        net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-        net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
-
-    # determine only the *output* layer names that we need from YOLO
-    ln = net.getLayerNames()
-    ln = [ln[i[0] - 1] for i in net.getUnconnectedOutLayers()]
-
     DISTANCE_THRESHOLD_METERS = 2
+
+    net, ln = get_yolo()
 
     video_getter, calibration_path = build_GUI()
     video_getter.start()
@@ -191,6 +195,7 @@ if __name__ == '__main__':
         frame_h = frame.shape[0]
         frame_w = frame.shape[1]
 
+        # Get input points
         if frame_num == 1:
             while len(mouse_points) <= 5:
                 text = "1) Insert 4 (rectangular in real world) ROI points from top-left in clockwise order"
@@ -216,14 +221,15 @@ if __name__ == '__main__':
                                          + (warped_distance_points[0][1] - warped_distance_points[1][1]) ** 2)
             distance_threshold = distance_threshold * DISTANCE_THRESHOLD_METERS
 
+        # Initialize bird view
         bird_view = []
         if aspect_ratio <= 1:
             bird_view = np.zeros((frame_h, int(frame_h * aspect_ratio), 3), np.uint8)
-            bird_view[:] = (41, 41, 41)
         else:
             bird_view = np.zeros((int(frame_w / aspect_ratio), frame_w, 3), np.uint8)
-            bird_view[:] = (41, 41, 41)
+        bird_view[:] = (41, 41, 41)
 
+        # Draw results
         results = detect_people(frame, net, ln, 0)
         violating_pairs = []
         if results:
@@ -254,6 +260,7 @@ if __name__ == '__main__':
 
         cv2.polylines(frame, np.int32([mouse_points[:4]]), True, (168, 50, 124), 2)
 
+        # Compute and write statistics
         if results:
             current_total_people = len([el for el in results_labels if el == 1 or el == 0])
             current_violating_people = len([el for el in results_labels if el == 1])
@@ -283,6 +290,7 @@ if __name__ == '__main__':
         text_bv = "Bird View"
         cv2.putText(bird_view, text_bv, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2)
 
+        # Move and resize the window if it's too big for the screen
         root = tk.Tk()
         screen_width = root.winfo_screenwidth()
         scree_height = root.winfo_screenheight()

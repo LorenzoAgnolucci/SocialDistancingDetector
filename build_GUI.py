@@ -50,7 +50,7 @@ def build_GUI():
     calibrationLabel.place(x=15, y=15)
 
     calibrationVar = tk.StringVar()
-    calibrationVar.set("calibration_matrix.yml")
+    calibrationVar.set("webcam_calibration_matrix.yml")
 
     calibrationEntry = tk.Entry(calibrationFrame, width=50, textvariable=calibrationVar)
     calibrationEntry.place(x=15, y=65)
@@ -69,12 +69,12 @@ def build_GUI():
             sourceLabel.configure(text="Don't worry about this")
             sourceVar.set("0")
             sourceEntry.configure(state="disabled")
-            calibrationVar.set("calibration_matrix.yml")
+            calibrationVar.set("webcam_calibration_matrix.yml")
 
         elif selectedOption == "IP webcam":
             sourceLabel.configure(text="Insert the webcam IP")
             sourceVar.set("https://192.168.1.37:8080/video")
-            calibrationVar.set("new_calibration_matrix.yml")
+            calibrationVar.set("phone_calibration_matrix.yml")
 
         elif selectedOption == "Local video":
             sourceLabel.configure(text="Insert the path to the local video")
