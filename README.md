@@ -37,13 +37,16 @@ To get a local copy up and running follow these simple steps.
  
 1. Clone the repo
 ```sh
-git clone https://gitlab.com/turboillegali/gutenberg
+git clone https://github.com/LorenzoAgnolucci/SocialDistancingDetector.git
 ```
 2. Download the network weights from the link in ```yolo-coco/yolov3_weights.txt``` and copy them in the ```yolo-coco``` folder
 
 3. If you want to run the code on a GPU (strongly recommended but not necessary), follow [this tutorial](https://www.pyimagesearch.com/2020/02/03/how-to-use-opencvs-dnn-module-with-nvidia-gpus-cuda-and-cudnn/) to compile OpenCV accordingly
 
-4. The project provide a ```Pipfile``` file that can be managed with [pipenv](https://github.com/pypa/pipenv) in order to avoid dependency/reproducibility problems. Install the dependencies (except for OpenCV if you compiled it) in your environment
+4. The project provides a ```requirements.txt``` file that can be used to install all the dependencies (except for OpenCV if you compiled it) in order to avoid dependency/reproducibility problems. For example in your virtual environment run 
+```sh
+pip install -r requirements.txt
+```
 
 
 ## Usage
