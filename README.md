@@ -55,7 +55,11 @@ pip install -r requirements.txt
 
 2. If needed change the ```frame_to_skip``` parameter in ```VideoGet.py``` to skip an arbitrary number of frames to reduce the latency
 
-3. Run ```social_distance_detector.py``` and choose the input video stream (optionally adding the calibration matrices path)
+3. Run ```social_distance_detector.py``` and choose the input video stream (optionally adding the calibration matrices path) between the available ones:
+   - Computer webcam
+   - IP webcam
+   - Local video (some examples are in ```/video```)
+   - Link to stream (some examples are in ```webcam_stream.txt```)
 
 ## Authors
 
